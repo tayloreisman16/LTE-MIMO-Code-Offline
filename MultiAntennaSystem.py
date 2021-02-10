@@ -13,8 +13,6 @@ class MultiAntennaSystem:
         self.all_bins = all_bins
         self.used_bins = (self.NFFT + all_bins) % self.NFFT
 
-        self.gain_db = 0
-
         self.num_symbols = num_symbols
         self.symbol_pattern = symbol_pattern
         self.fs = fs
@@ -39,17 +37,8 @@ class MultiAntennaSystem:
 
         # This buffer includes Cyclic Prefix (time domain)
         self.buffer_data_tx_time = np.zeros((self.num_ant_txrx, self.symb_len_total), dtype=complex)
-        # self.buffer_data_tx_time = np.zeros((self.num_ant_txrx, 2064),
-        #                                     dtype=complex)
         # This buffer includes Cyclic Prefix (time domain)
-        self.buffer_data_rx_time = np.zeros(
-                                            (self.num_ant_txrx,
-                                             self.symb_len_total + self.max_impulse - 1), dtype=complex)
-        self.buffer_data_rx_time_fo = np.zeros(
-                                            (self.num_ant_txrx,
-                                             self.symb_len_total + self.max_impulse - 1), dtype=complex)
-        # self.buffer_data_rx_time = np.zeros((self.num_ant_txrx, 3903),
-        #                                     dtype=complex)
+        self.buffer_data_rx_time = np.zeros((self.num_ant_txrx, self.symb_len_total + self.max_impulse - 1), dtype=complex)
 
         # print(self.buffer_data_tx_time.shape, self.buffer_data_rx_time.shape)
 
@@ -115,7 +104,7 @@ class MultiAntennaSystem:
 
                 if i > max_ind:
                     max_ind = i
-                    # max_val = v
+                    max_val = v
 
         self.chan_max_offset = max_ind - 1  # Maybe -1 not required??
         # print(self.chan_max_offset)
@@ -192,12 +181,11 @@ class MultiAntennaSystem:
 
                 if self.num_ant_txrx == 1:
                     self.buffer_data_tx[0, (self.NFFT * symb) + self.used_bins_data] = cmplx_data[0, :]
-
                 elif self.num_ant_txrx == 2 and self.MIMO_method == 'SpMult':
                     print('2 antennas with spatial multiplexing - not implemented yet')
                     exit(0)
-                    # print(self.buffer_data_tx[0, 1020:1030])
 
+                    # print(self.buffer_data_tx[0, 1020:1030])
     def multi_ant_symb_gen(self, num_symbols):
         pass
         min_pow = 1e-30
@@ -208,19 +196,15 @@ class MultiAntennaSystem:
 
             for ant in range(self.num_ant_txrx):
                 freq_data = self.buffer_data_tx[ant, symb * self.NFFT: (symb + 1) * self.NFFT]
-                # print('Frequency Data: ', freq_data)
                 data_ifft = np.fft.ifft(freq_data, self.NFFT)
                 cyclic_prefix = data_ifft[-self.len_CP:]
                 data_time = np.concatenate((cyclic_prefix, data_ifft))  # add CP
-                # print('Frequency Data after IFFT: ', np.fft.fft(data_ifft))
                 sig_energy = abs(np.dot(data_time, np.conj(data_time).T))
                 # power scaling to normalize to 1
                 if sig_energy > min_pow and ant == 0:
                     scale_factor = np.sqrt(len(data_time) / sig_energy)
-                    # print('scale factor', scale_factor)
 
                 data_time *= scale_factor
-                digital_gain = 10 ** (self.gain_db / 10)
 
                 start = symb * (self.NFFT + self.len_CP)
                 fin = (symb + 1) * (self.NFFT + self.len_CP)
@@ -232,11 +216,7 @@ class MultiAntennaSystem:
                 start = symb * (self.NFFT + self.len_CP)
                 fin = (symb + 1) * (self.NFFT + self.len_CP)
                 self.buffer_data_tx_time[ant, start: fin] *= (1 / np.sqrt(P))
-                # print("Check ", self.buffer_data_tx_time)
                 # print(self.buffer_data_tx_time.shape)
-        self.buffer_data_tx_time *= digital_gain
-        plt.plot(self.buffer_data_tx_time.real[0, 81:320])
-        plt.show()
 
     def rx_signal_gen(self):
         for rx in range(self.num_ant_txrx):

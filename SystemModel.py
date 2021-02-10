@@ -34,7 +34,7 @@ class SystemModel:
         self.NFFT = 2**(np.ceil(np.log2(round(self.channel_band / self.bin_spacing))))
         self.num_bins0 = np.floor(self.channel_band / self.bin_spacing)
         self.num_synch_bins = self.NFFT - 2
-        self.fs = self.bin_spacing * self.NFFT * 2
+        self.fs = self.bin_spacing * self.NFFT
 
         self.CP_samp = 16
         self.plot_num = 1
