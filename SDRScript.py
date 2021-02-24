@@ -6,7 +6,10 @@ from MultiAntennaSystem import MultiAntennaSystem
 from RxBasebandSystem import RxBasebandSystem
 from RxBitRecovery import RxBitRecovery
 import matplotlib.pyplot as plt
+import pickle
 
+file = 'tx_data_0.pckl'
+directory = '/srv/LTE-Code-Offline/Data/'
 SNR = 50  # dB
 
 num_cases = 1
@@ -142,6 +145,10 @@ for case in range(num_cases):
 
         # Receive signal with noise added
         multi_ant_sys.additive_noise(sys_model.SNR_type, SNR_dB, wireless_channel, sys_model.sig_datatype)
+
+        rx_file = open(directory + file, 'ab')
+        rx_data = multi_ant_sys.buffer_data_rx_time
+        pickle.dump(rx_data, rx_file)
 
         rx_sys = RxBasebandSystem(multi_ant_sys, Caz, param_est, case)
 
