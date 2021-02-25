@@ -8,7 +8,8 @@ from RxBitRecovery import RxBitRecovery
 import matplotlib.pyplot as plt
 import pickle
 
-file = 'tx_data_0.pckl'
+file_offline = 'tx_data_offline.pckl'
+file_online = 'tx_data_online.pckl'
 directory = '/srv/LTE-Code-Offline/Data/'
 SNR = 50  # dB
 
@@ -45,6 +46,7 @@ SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
 
 
 for case in range(num_cases):
+    print(case)
     sys_model = SystemModel(SDR_profiles[case])
 
     if SDR_profiles[case]['diagnostic'] == 0:
@@ -137,7 +139,9 @@ for case in range(num_cases):
         # plt.plot(multi_ant_sys.buffer_data_tx.real, multi_ant_sys.buffer_data_tx.imag, '.')
         # plt.show()
         multi_ant_sys.multi_ant_symb_gen(num_symbols)
-
+        tx_file = open(directory + file_online, 'ab')
+        tx_data = multi_ant_sys.buffer_data_tx_time
+        pickle.dump(tx_data, tx_file)
         # **** multi_ant_sys.buffer_data_tx_time is the variable to pckl for GNURadio transmitter **** #
 
         # Receive signal after convolution with channel
@@ -146,7 +150,7 @@ for case in range(num_cases):
         # Receive signal with noise added
         multi_ant_sys.additive_noise(sys_model.SNR_type, SNR_dB, wireless_channel, sys_model.sig_datatype)
 
-        rx_file = open(directory + file, 'ab')
+        rx_file = open(directory + file_offline, 'ab')
         rx_data = multi_ant_sys.buffer_data_rx_time
         pickle.dump(rx_data, rx_file)
 
