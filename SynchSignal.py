@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class SynchSignal:
@@ -29,7 +30,10 @@ class SynchSignal:
         else:
             self.ZChu0 = np.exp(-1j * (2 * np.pi / self.MM) * self.prime * (x0 * x1) / 2)
 
-        # print(len(self.ZChu0))
+        plt.plot(self.ZChu0.real)
+        plt.plot(self.ZChu0.imag)
+        plt.title('Reference Zadoff-Chu Signal')
+        plt.show()
 
         self.ZChu1 = np.zeros((self.num_ant, int(self.NFFT)), dtype=complex)
         # print(self.ZChu1[0, self.used_bin_ind.astype(int)])

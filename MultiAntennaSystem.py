@@ -61,7 +61,7 @@ class MultiAntennaSystem:
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         if self.num_ant_txrx == 1:
             if test_case == 0:
-                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+                h[0, 0] = np.array([0.7954 - 0.3977j, 0.3977, -0.1988, 0.0994, -0.0398])
             else:
                 print('# Load from MATLAB channel toolbox - currently not done')
                 exit(0)
@@ -78,6 +78,8 @@ class MultiAntennaSystem:
 
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
+                chan_tap = np.argmax(np.abs(h[rx, tx]))
+                print("Channel Tap: ", chan_tap)
                 if self.wireless_channel == 'AWGN':
                     self.channel_time[rx, tx, 1] = 1
                 else:
