@@ -10,6 +10,7 @@ import pickle
 
 file_offline = 'tx_data_offline.pckl'
 file_online = 'tx_data_online.pckl'
+bit_data = 'tx_bit_data.pckl'
 directory = '/srv/LTE-Code-Offline/Data/'
 SNR = 100 # dB
 
@@ -27,7 +28,7 @@ SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'MIMO_method': 'SpMult',
                     'SNR': SNR,
                     'ebno_db': [24],
-                    'num_symbols': [4],
+                    'num_symbols': [24],
                     'stream_size': 1},
                 1: {'system_scenario': 'WIFIMIMOSM-A',
                     'diagnostic': 0,
@@ -97,6 +98,8 @@ for case in range(num_cases):
         # sum of symbol_pattern gives the total number of data symbols
 
         binary_info = np.random.randint(0, 2, (sys_model.stream_size, int(sum(symbol_pattern) * num_used_bins * bits_per_bin)))
+        bit_input_file = open(directory + bit_data, 'wb')
+        pickle.dump(binary_info, bit_input_file)
 
         fs = sys_model.fs  # Sampling frequency
         Ts = 1 / fs  # Sampling period

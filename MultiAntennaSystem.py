@@ -61,7 +61,8 @@ class MultiAntennaSystem:
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         if self.num_ant_txrx == 1:
             if test_case == 0:
-                h[0, 0] = np.array([0.7954 - 0.3977j, 0.3977, -0.1988, 0.0994, -0.0398])
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+                # h[0, 0] = np.array([1])
             else:
                 print('# Load from MATLAB channel toolbox - currently not done')
                 exit(0)
