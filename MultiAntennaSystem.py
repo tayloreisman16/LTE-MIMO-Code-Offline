@@ -57,12 +57,14 @@ class MultiAntennaSystem:
             self.S = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.num_used_bins), dtype=complex)
             self.V = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.num_used_bins), dtype=complex)
 
-        test_case = 0
+        test_case = 1
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         if self.num_ant_txrx == 1:
             if test_case == 0:
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
                 # h[0, 0] = np.array([1])
+            elif test_case == 1:
+                h[0, 0] = np.array([1])
             else:
                 print('# Load from MATLAB channel toolbox - currently not done')
                 exit(0)
@@ -84,7 +86,7 @@ class MultiAntennaSystem:
                 if self.wireless_channel == 'AWGN':
                     self.channel_time[rx, tx, 1] = 1
                 else:
-                    if test_case == 0:
+                    if test_case == 0 or test_case == 1:
                         # need to normalize the channel
                         self.channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
                     else:
