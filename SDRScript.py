@@ -8,17 +8,17 @@ from RxBitRecovery import RxBitRecovery
 import matplotlib.pyplot as plt
 import pickle
 
-file_offline = 'tx_data_offline.pckl'
-file_online = 'tx_data_online.pckl'
-bit_data = 'tx_bit_data.pckl'
+file_offline = 'tx_data_offline'
+file_online = 'tx_data_online'
+bit_data = 'tx_bit_data'
 directory = '/srv/LTE-Code-Offline/Data/'
-SNR = 100 # dB
+SNR = 100  # dB
 
 num_cases = 1
 
 SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'diagnostic': 1,
-                    'wireless_channel': 'Fading',
+                    'wireless_channel': 'Ideal',
                     'channel_band': 0.97 * 960e3,
                     'bin_spacing': 15e3,
                     'channel_profile': 'LTE-TU',
@@ -98,7 +98,7 @@ for case in range(num_cases):
         # sum of symbol_pattern gives the total number of data symbols
 
         binary_info = np.random.randint(0, 2, (sys_model.stream_size, int(sum(symbol_pattern) * num_used_bins * bits_per_bin)))
-        bit_input_file = open(directory + bit_data, 'wb')
+        bit_input_file = open(directory + bit_data + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
         pickle.dump(binary_info, bit_input_file)
 
         fs = sys_model.fs  # Sampling frequency
@@ -130,7 +130,7 @@ for case in range(num_cases):
         # print(all_bins)
         # syschan
         # MultiAntennaSystem class object
-        multi_ant_sys = MultiAntennaSystem(OFDM_data, num_ant_txrx, MIMO_method, all_bins, num_symbols, symbol_pattern, fs, channel_profile, diagnostic, wireless_channel, stream_size, data_only_bins, ref_only_bins)
+        multi_ant_sys = MultiAntennaSystem(OFDM_data, num_ant_txrx, chan_type, MIMO_method, all_bins, num_symbols, symbol_pattern, fs, channel_profile, diagnostic, wireless_channel, stream_size, data_only_bins, ref_only_bins)
 
         # SynchSignal class object
         Caz = SynchSignal(len_CP, num_synch_bins, num_ant_txrx, NFFT, synch_data)
@@ -142,7 +142,7 @@ for case in range(num_cases):
         # plt.plot(multi_ant_sys.buffer_data_tx.real, multi_ant_sys.buffer_data_tx.imag, '.')
         # plt.show()
         multi_ant_sys.multi_ant_symb_gen(num_symbols)
-        tx_file = open(directory + file_online, 'wb')
+        tx_file = open(directory + file_online + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
         tx_data = multi_ant_sys.buffer_data_tx_time
         pickle.dump(tx_data, tx_file)
         # **** multi_ant_sys.buffer_data_tx_time is the variable to pckl for GNURadio transmitter **** #
@@ -153,7 +153,7 @@ for case in range(num_cases):
         # Receive signal with noise added
         multi_ant_sys.additive_noise(sys_model.SNR_type, SNR_dB, wireless_channel, sys_model.sig_datatype)
 
-        rx_file = open(directory + file_offline, 'wb')
+        rx_file = open(directory + file_offline + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
         rx_data = multi_ant_sys.buffer_data_rx_time
         pickle.dump(rx_data, rx_file)
 
