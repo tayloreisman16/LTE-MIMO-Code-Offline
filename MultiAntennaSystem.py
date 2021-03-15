@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 
 
 class MultiAntennaSystem:
-    def __init__(self, OFDM_data, num_ant_txrx, MIMO_method, all_bins, num_symbols, symbol_pattern, fs, channel_profile, diagnostic, wireless_channel, stream_size, data_only_bins, ref_only_bins):
+    def __init__(self, OFDM_data, num_ant_txrx, fading, MIMO_method, all_bins, num_symbols, symbol_pattern, fs, channel_profile, diagnostic, wireless_channel, stream_size, data_only_bins, ref_only_bins):
 
         self.OFDM_data = OFDM_data  # OFDM class object
+        self.fading = fading
         self.NFFT = int(self.OFDM_data.NFFT)
         self.len_CP = int(self.OFDM_data.len_CP)
         self.num_ant_txrx = num_ant_txrx
@@ -60,15 +61,11 @@ class MultiAntennaSystem:
         test_case = 1
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         if self.num_ant_txrx == 1:
-            if test_case == 0:
+            if self.fading == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
                 # h[0, 0] = np.array([1])
-            elif test_case == 1:
-                h[0, 0] = np.array([1])
             else:
-                print('# Load from MATLAB channel toolbox - currently not done')
-                exit(0)
-
+                h[0, 0] = np.array([1])
         elif self.num_ant_txrx == 2:
             if test_case == 0:
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
