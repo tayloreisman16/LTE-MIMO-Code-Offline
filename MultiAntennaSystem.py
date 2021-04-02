@@ -64,6 +64,10 @@ class MultiAntennaSystem:
             if self.fading == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
                 # h[0, 0] = np.array([1])
+            elif self.fading == 'IMT1':
+                h[0, 0] = np.array([0, 1])
+            elif self.fading == 'IMT16':
+                h[0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
             else:
                 h[0, 0] = np.array([1])
         elif self.num_ant_txrx == 2:

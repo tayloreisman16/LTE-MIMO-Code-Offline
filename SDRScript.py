@@ -18,7 +18,7 @@ num_cases = 1
 
 SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'diagnostic': 1,
-                    'wireless_channel': 'Ideal',
+                    'wireless_channel': 'IMT16',
                     'channel_band': 0.97 * 960e3,
                     'bin_spacing': 15e3,
                     'channel_profile': 'LTE-TU',
