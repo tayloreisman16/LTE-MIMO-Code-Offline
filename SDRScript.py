@@ -12,13 +12,13 @@ file_offline = 'tx_data_offline'
 file_online = 'tx_data_online'
 bit_data = 'tx_bit_data'
 directory = '/srv/LTE-Code-Offline/Data/'
-SNR = 100  # dB
+SNR = 30  # dB
 
 num_cases = 1
 
 SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'diagnostic': 1,
-                    'wireless_channel': 'IMT16',
+                    'wireless_channel': 'Ideal',
                     'channel_band': 0.97 * 960e3,
                     'bin_spacing': 15e3,
                     'channel_profile': 'LTE-TU',
