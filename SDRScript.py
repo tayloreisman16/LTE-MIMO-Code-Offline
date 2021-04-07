@@ -12,13 +12,13 @@ file_offline = 'tx_data_offline'
 file_online = 'tx_data_online'
 bit_data = 'tx_bit_data'
 directory = '/srv/LTE-Code-Offline/Data/'
-SNR = 30  # dB
+SNR = 15  # dB
 
 num_cases = 1
 
 SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'diagnostic': 1,
-                    'wireless_channel': 'Ideal',
+                    'wireless_channel': 'Fading',
                     'channel_band': 0.97 * 960e3,
                     'bin_spacing': 15e3,
                     'channel_profile': 'LTE-TU',
@@ -28,7 +28,7 @@ SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
                     'MIMO_method': 'SpMult',
                     'SNR': SNR,
                     'ebno_db': [24],
-                    'num_symbols': [24],
+                    'num_symbols': [240],
                     'stream_size': 1},
                 1: {'system_scenario': 'WIFIMIMOSM-A',
                     'diagnostic': 0,
@@ -168,8 +168,10 @@ for case in range(num_cases):
             # IQ plot
             rx_newshape = rx_sys.est_data_freq.shape[0] * rx_sys.est_data_freq.shape[1] * rx_sys.est_data_freq.shape[2]
             rx_phasors = np.reshape(rx_sys.est_data_freq, (1, rx_newshape))
-
-            plt.plot(rx_phasors[0, :].real, rx_phasors[0, :].imag, '.')
+            plt.title(f'QPSK constellation at an SNR of {SNR_dB}dB')
+            plt.xlabel(f'real part')
+            plt.ylabel(f'imaginary part')
+            plt.plot(rx_phasors[:, :].real, rx_phasors[:, :].imag, '.', color='b')
             plt.show()
 
         bit_rec = RxBitRecovery(rx_sys.est_data_freq, rx_sys.used_bins_data, rx_sys.corr_obs, rx_sys.symbol_pattern, binary_info,
