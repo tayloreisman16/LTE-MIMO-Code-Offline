@@ -1,13 +1,20 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import pickle
+
 from SystemModel import SystemModel
 from OFDM import OFDM
 from SynchSignal import SynchSignal
 from MultiAntennaSystem import MultiAntennaSystem
 from RxBasebandSystem import RxBasebandSystem
 from RxBitRecovery import RxBitRecovery
-import matplotlib.pyplot as plt
-import pickle
 
+from PLSParameters import PLSParameters
+from PLSTransmitter import PLSTransmitter
+from PLSReceiver import PLSReceiver
+from SynchSignal import SynchSignal
+
+save_files = 0
 file_offline = 'tx_data_offline'
 file_online = 'tx_data_online'
 bit_data = 'tx_bit_data'
@@ -15,40 +22,59 @@ directory = '/srv/LTE-Code-Offline/Data/'
 SNR = 15  # dB
 
 num_cases = 1
+pls = 0
 
-SDR_profiles = {0: {'system_scenario': '4G5GSISO-TU',
-                    'diagnostic': 1,
-                    'wireless_channel': 'Fading',
-                    'channel_band': 0.97 * 960e3,
-                    'bin_spacing': 15e3,
-                    'channel_profile': 'LTE-TU',
-                    'CP_type': 'Normal',
-                    'num_ant_txrx': 1,
-                    'param_est': 'Estimated',
-                    'MIMO_method': 'SpMult',
-                    'SNR': SNR,
-                    'ebno_db': [24],
-                    'num_symbols': [240],
-                    'stream_size': 1},
-                1: {'system_scenario': 'WIFIMIMOSM-A',
-                    'diagnostic': 0,
-                    'wireless_channel': 'Fading',
-                    'channel_band': 0.9 * 20e6,
-                    'bin_spacing': 312.5e3,
-                    'channel_profile': 'Indoor A',
-                    'CP_type': 'Extended',
-                    'num_ant_txrx': 2,
-                    'param_est': 'Ideal',
-                    'MIMO_method': 'SpMult',
-                    'SNR': SNR,
-                    'ebno_db': [6, 7, 8, 9, 10, 14, 16, 20, 24],
-                    'num_symbols': [10, 10, 10, 10, 10, 10, 10, 10, 10],
-                    'stream_size': 2}}
+if pls == 0:
+    SDR_profiles = {
+        0: {'system_scenario': '4G5GSISO-TU',
+            'diagnostic': 1,
+            'wireless_channel': 'Fading',
+            'channel_band': 0.97 * 960e3,
+            'bin_spacing': 15e3,
+            'channel_profile': 'LTE-TU',
+            'CP_type': 'Normal',
+            'num_ant_txrx': 1,
+            'param_est': 'Estimated',
+            'MIMO_method': 'SpMult',
+            'SNR': SNR,
+            'ebno_db': [24],
+            'num_symbols': [24],
+            'stream_size': 1,
+            'synch_data_pattern': [2, 1]},
+        1: {'system_scenario': 'WIFIMIMOSM-A',
+            'diagnostic': 0,
+            'wireless_channel': 'Fading',
+            'channel_band': 0.9 * 20e6,
+            'bin_spacing': 312.5e3,
+            'channel_profile': 'Indoor A',
+            'CP_type': 'Extended',
+            'num_ant_txrx': 2,
+            'param_est': 'Ideal',
+            'MIMO_method': 'SpMult',
+            'SNR': SNR,
+            'ebno_db': [6, 7, 8, 9, 10, 14, 16, 20, 24],
+            'num_symbols': [10, 10, 10, 10, 10, 10, 10, 10, 10],
+            'stream_size': 2,
+            'synch_data_pattern': [2, 1]}
+        }
+else:
+    SDR_profiles = {
+        0: {'bandwidth': 960e3,
+            'bin_spacing': 15e3,
+            'num_ant': 2,
+            'bit_codebook': 1,
+            'synch_data_pattern': [2, 1],
+            'pvt_info_len': 144,
+            'channel_profile': 'Fading'}
+    }
 
 
 for case in range(num_cases):
     print(case)
-    sys_model = SystemModel(SDR_profiles[case])
+    if pls == 0:
+        sys_model = SystemModel(SDR_profiles[case])
+    else:
+        sys_model = PLSParameters(SDR_profiles[case])
 
     if SDR_profiles[case]['diagnostic'] == 0:
         loop_runs = len(SDR_profiles[case]['ebno_db'])
@@ -78,7 +104,6 @@ for case in range(num_cases):
         data_only_bins = np.setdiff1d(all_bins, ref_only_bins)  # Actual bins occupied by data
 
         num_used_bins = len(data_only_bins)
-        print('Num data bins', num_used_bins)
         modulation_type = sys_model.modulation_type
         bits_per_bin = sys_model.bits_per_bin
 
@@ -88,18 +113,26 @@ for case in range(num_cases):
             SNR_dB = SNR
 
         synch_data = sys_model.synch_data
-        num_synchdata_patterns = int(np.ceil(sys_model.num_symbols[loop_iter] / sum(synch_data)))
-        num_symbols = sum(synch_data) * num_synchdata_patterns
+        if pls == 0:
+            num_synchdata_patterns = int(np.ceil(sys_model.num_symbols[loop_iter] / sum(synch_data)))
+            num_symbols = sum(synch_data) * num_synchdata_patterns
+        else:
+            num_data_symb = int(ceil(pvt_info_len / (sys_model.num_subbands * sys_model.bit_codebook)))
+            num_synch_symb = sys_model.synch_data_pattern[0] * num_data_symb
+
 
         # 0 - synch symbol, 1 - data symbol
         symbol_pattern0 = np.concatenate((np.zeros(synch_data[0]), np.ones(synch_data[1])))
         symbol_pattern = np.tile(symbol_pattern0, num_synchdata_patterns)
 
         # sum of symbol_pattern gives the total number of data symbols
-
-        binary_info = np.random.randint(0, 2, (sys_model.stream_size, int(sum(symbol_pattern) * num_used_bins * bits_per_bin)))
-        bit_input_file = open(directory + bit_data + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
-        pickle.dump(binary_info, bit_input_file)
+        if pls == 0:
+            binary_info = np.random.randint(0, 2, (sys_model.stream_size, int(sum(symbol_pattern) * num_used_bins * bits_per_bin)))
+        else:
+            binary_info = np.random.randint(0, 2, sys_model.pvt_info_len)
+        if save_files == 1:
+            bit_input_file = open(directory + bit_data + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
+            pickle.dump(binary_info, bit_input_file)
 
         fs = sys_model.fs  # Sampling frequency
         Ts = 1 / fs  # Sampling period
@@ -142,9 +175,10 @@ for case in range(num_cases):
         # plt.plot(multi_ant_sys.buffer_data_tx.real, multi_ant_sys.buffer_data_tx.imag, '.')
         # plt.show()
         multi_ant_sys.multi_ant_symb_gen(num_symbols)
-        tx_file = open(directory + file_online + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
-        tx_data = multi_ant_sys.buffer_data_tx_time
-        pickle.dump(tx_data, tx_file)
+        if save_files == 1:
+            tx_file = open(directory + file_online + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
+            tx_data = multi_ant_sys.buffer_data_tx_time
+            pickle.dump(tx_data, tx_file)
         # **** multi_ant_sys.buffer_data_tx_time is the variable to pckl for GNURadio transmitter **** #
 
         # Receive signal after convolution with channel
@@ -152,10 +186,10 @@ for case in range(num_cases):
 
         # Receive signal with noise added
         multi_ant_sys.additive_noise(sys_model.SNR_type, SNR_dB, wireless_channel, sys_model.sig_datatype)
-
-        rx_file = open(directory + file_offline + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
-        rx_data = multi_ant_sys.buffer_data_rx_time
-        pickle.dump(rx_data, rx_file)
+        if save_files == 1:
+            rx_file = open(directory + file_offline + '_chan_type_' + chan_type + '_SNR_' + str(SNR_dB) + '.pckl', 'wb')
+            rx_data = multi_ant_sys.buffer_data_rx_time
+            pickle.dump(rx_data, rx_file)
 
         rx_sys = RxBasebandSystem(multi_ant_sys, Caz, param_est, case)
 
